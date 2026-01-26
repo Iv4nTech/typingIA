@@ -1,15 +1,51 @@
 const text = document.getElementById('text-typing');
-const message = 'Hola buenas esto es una prueba para hacer primero la lógica para poder teclear y luego integro la IA';
+let message = '';
 const input = document.getElementById('inputTyping');
-const arrayCaracteres = []
-const arrayUsuario = []
+let arrayCaracteres = [];
+let arrayUsuario = [];
 
-for (const letra of message) {
-    const caracter = document.createElement('span');
-    caracter.textContent = letra;
-    arrayCaracteres.push(letra);
-    text.appendChild(caracter);
+const obtenerFrase = async () => {
+
+    try {
+
+       const response = await fetch('http://127.0.0.1:8000/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ llave: "valor" })
+        });
+
+        const data = await response.json()
+        console.log(data)
+        return data['respuesta']
+
+    } catch {
+        console.log('La conexión de la API fue erronea');
+        message = 'Mensaje por defecto para que el usuario haga typing';
+    }
 }
+
+const init = async () => {
+    
+    arrayCaracteres = [];
+    arrayUsuario = [];
+    text.innerHTML = '<h2>Generando frase...</h2>';
+    message = await obtenerFrase();
+    text.innerHTML = "";
+        
+        for (const letra of message) {
+            const caracter = document.createElement('span');
+            caracter.textContent = letra;
+            arrayCaracteres.push(letra);
+            text.appendChild(caracter);
+        } 
+    
+}
+
+
+
+
+
+
 
 input.addEventListener('blur', () => {
     input.focus();
@@ -41,6 +77,12 @@ function retroceder() {
 
 
 function comprobar() {
+    console.log(arrayUsuario.length)
+     console.log(arrayCaracteres.length)
+    if (arrayUsuario.length == arrayCaracteres.length) {
+        init();
+    }
+
     for (let i = 0; i < arrayUsuario.length; i++) {
         if (arrayUsuario[i] === arrayCaracteres[i]) {
             text.children[i].classList.add('correcto');
@@ -50,3 +92,5 @@ function comprobar() {
         
     }
 }
+
+init()

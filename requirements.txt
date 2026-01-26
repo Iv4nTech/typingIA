@@ -1,0 +1,7 @@
+fastapi[standard]
+uvicorn 
+sentence-transformers
+torch
+requests
+transformers
+accelerate
