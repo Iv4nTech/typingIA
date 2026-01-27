@@ -3,64 +3,65 @@ let message = '';
 const input = document.getElementById('inputTyping');
 let arrayCaracteres = [];
 let arrayUsuario = [];
+let arrayTeclasError = [];
+let auxSalidaError = '';
 
 const obtenerFrase = async () => {
 
     try {
 
-       const response = await fetch('http://127.0.0.1:8000/', {
+       const response = await fetch('http://127.0.0.1:8000', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ llave: "valor" })
+            body: JSON.stringify({ 'errors': arrayTeclasError })
         });
 
-        const data = await response.json()
-        console.log(data)
-        return data['respuesta']
+        arrayTeclasError = [];
+        document.getElementById('keyerror').innerHTML = "";
+
+        const data = await response.json();
+        console.log(data);
+        return data['respuesta'];
 
     } catch {
         console.log('La conexión de la API fue erronea');
         message = 'Mensaje por defecto para que el usuario haga typing';
+        return message;
     }
-}
+};
 
 const init = async () => {
-    
     arrayCaracteres = [];
     arrayUsuario = [];
     text.innerHTML = '<h2>Generando frase...</h2>';
     message = await obtenerFrase();
     text.innerHTML = "";
         
-        for (const letra of message) {
-            const caracter = document.createElement('span');
-            caracter.textContent = letra;
-            arrayCaracteres.push(letra);
-            text.appendChild(caracter);
-        } 
-    
-}
-
-
-
-
-
-
+    for (const letra of message) {
+        const caracter = document.createElement('span');
+        caracter.textContent = letra;
+        arrayCaracteres.push(letra);
+        text.appendChild(caracter);
+    } 
+};
 
 input.addEventListener('blur', () => {
     input.focus();
 });
 
 input.addEventListener('keydown', (event) => {
-    if (event.key != 'Backspace' && event.key != 'CapsLock')
-    arrayUsuario.push(event.key);
+    if (event.key != 'Backspace' && event.key != 'CapsLock') {
+        arrayUsuario.push(event.key);
+    }
+    
     console.log(arrayUsuario);
     console.log(arrayCaracteres);
+    
     if (event.key == 'Backspace') {
         retroceder();
     }
 
-    comprobar()
+    comprobar();
 });
 
 function retroceder() {
@@ -69,16 +70,12 @@ function retroceder() {
 
     text.children[lastIndex].classList.remove('correcto');
     text.children[lastIndex].classList.remove('error');
-
-
 }
 
-
-
-
 function comprobar() {
-    console.log(arrayUsuario.length)
-     console.log(arrayCaracteres.length)
+    console.log(arrayUsuario.length);
+    console.log(arrayCaracteres.length);
+    
     if (arrayUsuario.length == arrayCaracteres.length) {
         init();
     }
@@ -87,10 +84,17 @@ function comprobar() {
         if (arrayUsuario[i] === arrayCaracteres[i]) {
             text.children[i].classList.add('correcto');
         } else {
-              text.children[i].classList.add('error');
+            text.children[i].classList.add('error');
+            if(!arrayTeclasError.includes(text.children[i].textContent)) {
+                arrayTeclasError.push(text.children[i].textContent); 
+                for (const tecla of arrayTeclasError) {
+                    auxSalidaError += tecla;
+                }
+                document.getElementById('keyerror').innerHTML = auxSalidaError;
+                auxSalidaError = "";
+            }
         }
-        
     }
 }
 
-init()
+init();

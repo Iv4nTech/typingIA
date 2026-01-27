@@ -14,37 +14,6 @@ model = AutoModelForCausalLM.from_pretrained(
     device_map="auto"
 )
 
-prompt = "Give me a four-line sentence in Spanish"
-messages = [
-    {"role": "user", "content": prompt}
-]
-
-text = tokenizer.apply_chat_template(
-    messages,
-    tokenize=False,
-    add_generation_prompt=True,
-    enable_thinking=True # Switches between thinking and non-thinking modes. Default is True.
-)
-model_inputs = tokenizer([text], return_tensors="pt").to(model.device)
-
-generated_ids = model.generate(
-    **model_inputs,
-    max_new_tokens=32768
-)
-output_ids = generated_ids[0][len(model_inputs.input_ids[0]):].tolist() 
-
-# parsing thinking content
-try:
-    # rindex finding 151668 (</think>)
-    index = len(output_ids) - output_ids[::-1].index(151668)
-except ValueError:
-    index = 0
-
-thinking_content = tokenizer.decode(output_ids[:index], skip_special_tokens=True).strip("\n")
-content = tokenizer.decode(output_ids[index:], skip_special_tokens=True).strip("\n")
-print('-----------------------------------')
-print(f'Contenido generado: {content}')
-
 app = FastAPI()
 
 app.add_middleware(
@@ -54,40 +23,56 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
+class ErrorKeys(BaseModel):
+    errors: list[str]
 
 @app.post("/")
-async def root():
-  prompt = "Give me a four-line sentence in Spanish"
-  messages = [
-      {"role": "user", "content": prompt}
-  ]
+async def root(data: ErrorKeys):
+    prompt = (
+        f"Escribe una frase de dos líneas sobre cualquier tema, intentando usar estas letras: {','.join(data.errors)}. "
+        "Usa SOLO letras"
+        "NO uses puntos, ni comas, ni signos de exclamación, ni símbolos. "
+    )
+    
+    messages = [{"role": "user", "content": prompt}]
 
-  text = tokenizer.apply_chat_template(
-      messages,
-      tokenize=False,
-      add_generation_prompt=True,
-      enable_thinking=True # Switches between thinking and non-thinking modes. Default is True.
-  )
-  model_inputs = tokenizer([text], return_tensors="pt").to(model.device)
+    text = tokenizer.apply_chat_template(
+        messages,
+        tokenize=False,
+        add_generation_prompt=True,
+        enable_thinking=False 
+    )
+    
+    model_inputs = tokenizer([text], return_tensors="pt").to(model.device)
 
-  generated_ids = model.generate(
-      **model_inputs,
-      max_new_tokens=32768
-  )
-  output_ids = generated_ids[0][len(model_inputs.input_ids[0]):].tolist() 
+    generated_ids = model.generate(
+        **model_inputs,
+        max_new_tokens=500,
+        do_sample=True,        
+        temperature=0.8,       
+        top_p=0.9,            
+        repetition_penalty=1.2
+    )
+    
 
-  # parsing thinking content
-  try:
-      # rindex finding 151668 (</think>)
-      index = len(output_ids) - output_ids[::-1].index(151668)
-  except ValueError:
-      index = 0
+    output_ids = generated_ids[0][len(model_inputs.input_ids[0]):]
+    full_output = tokenizer.decode(output_ids, skip_special_tokens=True)
 
-  thinking_content = tokenizer.decode(output_ids[:index], skip_special_tokens=True).strip("\n")
-  content = tokenizer.decode(output_ids[index:], skip_special_tokens=True).strip("\n")
+    thinking_content = ""
+    final_content = full_output
 
-  return {
+    if "</think>" in full_output:
+        parts = full_output.split("</think>")
+        # Lo que está antes del cierre es el pensamiento (quitando el tag de apertura si existe)
+        thinking_content = parts[0].replace("<think>", "").strip()
+        # Lo que está después es la respuesta limpia
+        final_content = parts[1].strip()
+    elif "<think>" in full_output:
+        # Por si el modelo se corta antes de cerrar el </think>
+        parts = full_output.split("<think>")
+        final_content = parts[-1].strip()
+
+    return {
         "pensamiento": thinking_content,
-        "respuesta": content
+        "respuesta": final_content
     }

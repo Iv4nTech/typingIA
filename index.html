@@ -4,26 +4,119 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Typing Texto Generativo IA</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
     <style>
+        :root {
+            --bg-color: #323437;
+            --text-color: #646669;
+            --main-accent: #e2b714;
+            --correct-color: #d1d0c5;
+            --error-color: #ca4754;
+            --font-main: 'JetBrains Mono', monospace;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .tittle-section {
+            font-size: 1rem;
+            opacity: 0.6;
+            margin-bottom: 2rem;
+            font-weight: 400;
+        }
+
+        /* Contenedor del texto */
+        .text-typing {
+            font-size: 1.5rem;
+            line-height: 1.6;
+            max-width: 900px;
+            width: 100%;
+            text-align: left;
+            user-select: none; /* Evita que el usuario seleccione texto por error */
+            margin-bottom: 2rem;
+            min-height: 100px;
+        }
+
+        /* --- TUS CLASES DE JS (Estilizadas) --- */
+        
         .correcto {
-            color: green;
+            color: var(--correct-color);
         }
 
         .error {
-            color: red;
+            color: var(--error-color);
+            border-bottom: 2px solid var(--error-color);
+            border-radius: 2px;
+        }
+
+        .corregido {
+            color: var(--main-accent);
+        }
+
+        /* -------------------------------------- */
+
+        /* Input invisible pero capta el foco */
+        .input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #keyerror {
+            font-size: 0.9rem;
+            color: var(--main-accent);
+            min-height: 1.2rem;
+        }
+
+        footer {
+            margin-top: auto;
+            font-size: 0.8rem;
+            color: var(--text-color);
+            padding: 20px;
+        }
+
+        /* Estilo sutil para cuando el sistema está listo */
+        .container-active {
+            cursor: text;
         }
     </style>
-    <h1 class="tittle-section">Teclea para que la IA genere más texto en base a la prueba!</h1>
-    <div class="text-typing" id="text-typing">
+</head>
+<body class="container-active">
+
+    <h1 class="tittle-section">Teclea para que la IA genere más texto en base a la prueba</h1>
     
-    </div>
-    <input class="input" id="inputTyping" type="text" autofocus>
+    <div class="text-typing" id="text-typing">
+        </div>
+
+    <input class="input" id="inputTyping" type="text" autofocus autocomplete="off">
+
+    <h2 class="tittle-section">Letras erroneas (en estas se basara la IA para generar nuevas frases):</h2>
+    <div id="keyerror"></div>
+
     <footer>
         Iván Gómez &copy; 2026
     </footer>
+
     <script src="script.js"></script>
+    
+    <script>
+        // Mantiene el input enfocado siempre que el usuario haga clic en la pantalla
+        document.addEventListener('click', () => {
+            document.getElementById('inputTyping').focus();
+        });
+    </script>
 </body>
 </html>
