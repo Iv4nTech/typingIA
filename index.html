@@ -36,19 +36,18 @@
             font-weight: 400;
         }
 
-        /* Contenedor del texto */
         .text-typing {
             font-size: 1.5rem;
             line-height: 1.6;
             max-width: 900px;
             width: 100%;
             text-align: left;
-            user-select: none; /* Evita que el usuario seleccione texto por error */
+            user-select: none; 
             margin-bottom: 2rem;
             min-height: 100px;
+            font-size: 4.5rem;
         }
 
-        /* --- TUS CLASES DE JS (Estilizadas) --- */
         
         .correcto {
             color: var(--correct-color);
@@ -64,9 +63,6 @@
             color: var(--main-accent);
         }
 
-        /* -------------------------------------- */
-
-        /* Input invisible pero capta el foco */
         .input {
             position: absolute;
             top: 0;
@@ -76,8 +72,7 @@
         }
 
         #keyerror {
-            font-size: 0.9rem;
-            color: var(--main-accent);
+            font-size: 2rem;
             min-height: 1.2rem;
         }
 
@@ -86,6 +81,11 @@
             font-size: 0.8rem;
             color: var(--text-color);
             padding: 20px;
+        }
+
+        .important {
+            color: var(--main-accent);
+            font-size: small;
         }
 
         /* Estilo sutil para cuando el sistema está listo */
@@ -102,21 +102,18 @@
         </div>
 
     <input class="input" id="inputTyping" type="text" autofocus autocomplete="off">
+    <h2>Letras erroneas:</h2>
+    <div class="error" id="keyerror"></div>
 
-    <h2 class="tittle-section">Letras erroneas (en estas se basara la IA para generar nuevas frases):</h2>
-    <div id="keyerror"></div>
-
+    <h2 class="important">Información:</h2>
+    <h3 class="important">1.Escribe la frase que aparesca, esta la habrá generado la IA como ha querido</h3>
+     <h3 class="important">2.Cuando falles un carácter la IA lo recoge y crea una frase exclusivamente en lo que has fallado</h3>
+     <h3 class="important">3. Si vuelves a tener 0 fallos la IA volvera a generar frases aleatorias</h3>
+     
     <footer>
         Iván Gómez &copy; 2026
     </footer>
 
     <script src="script.js"></script>
-    
-    <script>
-        // Mantiene el input enfocado siempre que el usuario haga clic en la pantalla
-        document.addEventListener('click', () => {
-            document.getElementById('inputTyping').focus();
-        });
-    </script>
 </body>
 </html>
