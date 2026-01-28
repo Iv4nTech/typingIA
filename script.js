@@ -31,6 +31,7 @@ const obtenerFrase = async () => {
 };
 
 const init = async () => {
+    input.disabled = true;
     arrayCaracteres = [];
     arrayUsuario = [];
     text.innerHTML = '<h2>Generando frase...</h2>';
@@ -43,6 +44,9 @@ const init = async () => {
         arrayCaracteres.push(letra);
         text.appendChild(caracter);
     } 
+
+    input.disabled = false;
+    input.focus()
 };
 
 input.addEventListener('blur', () => {
@@ -76,10 +80,7 @@ function comprobar() {
     console.log(arrayUsuario.length);
     console.log(arrayCaracteres.length);
     
-    if (arrayUsuario.length == arrayCaracteres.length) {
-        init();
-    }
-
+    
     for (let i = 0; i < arrayUsuario.length; i++) {
         if (arrayUsuario[i] === arrayCaracteres[i]) {
             text.children[i].classList.add('correcto');
@@ -94,6 +95,10 @@ function comprobar() {
                 auxSalidaError = "";
             }
         }
+    }
+    
+    if (arrayUsuario.length == arrayCaracteres.length) {
+        init();
     }
 }
 

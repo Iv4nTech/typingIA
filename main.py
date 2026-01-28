@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-model_name = "Qwen/Qwen3-0.6B"
+model_name = "Qwen/Qwen3-1.7B"
 
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 
@@ -28,26 +28,27 @@ class ErrorKeys(BaseModel):
 
 @app.post("/")
 async def root(data: ErrorKeys):
-    prompt = (
-        f"Escribe una frase de dos líneas sobre cualquier tema, intentando usar estas letras: {','.join(data.errors)}. "
-        "Usa SOLO letras"
-        "NO uses puntos, ni comas, ni signos de exclamación, ni símbolos. "
-    )
-    
+
+
+    print(f'DATOS DE ENTRADA A LA IA: {data.errors}')
+    task = f"Use-only:{','.join(data.errors)}|Nonsense sentences only characters" if data.errors else "coherent English sentence"
+
+    prompt = f"[TASK]: {task}\n[RULES]: lowercase,no-symbols, no letters space between, lyrics only in english\nRESULT:"
+        
     messages = [{"role": "user", "content": prompt}]
 
     text = tokenizer.apply_chat_template(
-        messages,
-        tokenize=False,
-        add_generation_prompt=True,
-        enable_thinking=False 
-    )
-    
+            messages,
+            tokenize=False,
+            add_generation_prompt=True,
+            enable_thinking=False 
+        )
+        
     model_inputs = tokenizer([text], return_tensors="pt").to(model.device)
 
     generated_ids = model.generate(
         **model_inputs,
-        max_new_tokens=500,
+        max_new_tokens=30,
         do_sample=True,        
         temperature=0.8,       
         top_p=0.9,            
@@ -63,12 +64,9 @@ async def root(data: ErrorKeys):
 
     if "</think>" in full_output:
         parts = full_output.split("</think>")
-        # Lo que está antes del cierre es el pensamiento (quitando el tag de apertura si existe)
         thinking_content = parts[0].replace("<think>", "").strip()
-        # Lo que está después es la respuesta limpia
         final_content = parts[1].strip()
     elif "<think>" in full_output:
-        # Por si el modelo se corta antes de cerrar el </think>
         parts = full_output.split("<think>")
         final_content = parts[-1].strip()
 
