@@ -1,17 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from transformers import pipeline
+import re
 
-from transformers import AutoModelForCausalLM, AutoTokenizer
-
-model_name = "Qwen/Qwen3-1.7B"
-
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-
-model = AutoModelForCausalLM.from_pretrained(
-    model_name,
-    torch_dtype="auto",
-    device_map="auto"
+pipe = pipeline(
+    "text-generation",
+    model="Qwen/Qwen3-1.7B", 
+    device_map="auto",
+    torch_dtype="auto"
 )
 
 app = FastAPI()
@@ -28,49 +25,36 @@ class ErrorKeys(BaseModel):
 
 @app.post("/")
 async def root(data: ErrorKeys):
-
-
-    print(f'DATOS DE ENTRADA A LA IA: {data.errors}')
-    task = f"Use-only:{','.join(data.errors)}|Nonsense sentences only characters" if data.errors else "coherent English sentence"
-
-    prompt = f"[TASK]: {task}\n[RULES]: lowercase,no-symbols, no letters space between, lyrics only in english\nRESULT:"
-        
-    messages = [{"role": "user", "content": prompt}]
-
-    text = tokenizer.apply_chat_template(
-            messages,
-            tokenize=False,
-            add_generation_prompt=True,
-            enable_thinking=False 
+    if data.errors:
+        letras = ",".join(data.errors)
+        prompt = (
+            f"letters:a,b,c|result:abc aac\n"
+            f"letters:x,y|result:yyx xyx\n"
+            f"letters:{letras}|result:"
         )
-        
-    model_inputs = tokenizer([text], return_tensors="pt").to(model.device)
+    else:
+        prompt = "A random sentence in English: "
 
-    generated_ids = model.generate(
-        **model_inputs,
-        max_new_tokens=30,
-        do_sample=True,        
-        temperature=0.8,       
-        top_p=0.9,            
-        repetition_penalty=1.2
+
+    result = pipe(
+        prompt,
+        max_new_tokens=25,       
+        do_sample=True,          
+        temperature=0.9,         
+        top_k=50,                
+        repetition_penalty=1.2,  
+        return_full_text=False,
     )
     
+    output = result[0]['generated_text'].strip()
 
-    output_ids = generated_ids[0][len(model_inputs.input_ids[0]):]
-    full_output = tokenizer.decode(output_ids, skip_special_tokens=True)
+  
+    frase = output.split('\n')[0].strip()
+    if ":" in frase:
+        frase = frase.split(":")[-1].strip()
 
-    thinking_content = ""
-    final_content = full_output
-
-    if "</think>" in full_output:
-        parts = full_output.split("</think>")
-        thinking_content = parts[0].replace("<think>", "").strip()
-        final_content = parts[1].strip()
-    elif "<think>" in full_output:
-        parts = full_output.split("<think>")
-        final_content = parts[-1].strip()
+    final_content = re.sub(r'[^a-z\s]', '', frase.lower()).strip()
 
     return {
-        "pensamiento": thinking_content,
         "respuesta": final_content
     }
